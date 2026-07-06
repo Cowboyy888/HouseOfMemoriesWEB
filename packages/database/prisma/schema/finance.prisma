@@ -1,0 +1,154 @@
+// ============================================================
+// FINANCE
+// ============================================================
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+  CASH
+}
+
+enum PaymentProvider {
+  STRIPE
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+// Exactly one of bookingId / saleTransactionId / paymentScheduleId must be
+// set. Prisma can't express a multi-column CHECK constraint natively, so
+// this is enforced with a raw-SQL constraint added in a follow-up migration
+// (see Migration-Strategy.md) plus application-layer validation.
+model Payment {
+  id                String          @id @default(uuid())
+  amount            Decimal         @db.Decimal(12, 2)
+  currency          String          @default("USD")
+  method            PaymentMethod
+  provider          PaymentProvider @default(STRIPE)
+  providerPaymentId String?         @unique
+  status            PaymentStatus   @default(PENDING)
+
+  bookingId         String?
+  booking           Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  saleTransactionId String?
+  saleTransaction   SaleTransaction? @relation(fields: [saleTransactionId], references: [id], onDelete: SetNull)
+  paymentScheduleId String?
+  paymentSchedule   PaymentSchedule? @relation(fields: [paymentScheduleId], references: [id], onDelete: SetNull)
+
+  paidByCustomerId String
+  paidByCustomer   CustomerProfile @relation(fields: [paidByCustomerId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refunds Refund[]
+
+  @@index([status, createdAt])
+  @@index([bookingId])
+  @@index([saleTransactionId])
+  @@index([paymentScheduleId])
+  @@map("payments")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  VOID
+}
+
+model Invoice {
+  id                String           @id @default(uuid())
+  invoiceNumber     String           @unique
+  customerId        String
+  customer          CustomerProfile  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  bookingId         String?
+  booking           Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  saleTransactionId String?
+  saleTransaction   SaleTransaction? @relation(fields: [saleTransactionId], references: [id], onDelete: SetNull)
+  issueDate         DateTime         @default(now())
+  dueDate           DateTime
+  subtotal          Decimal          @db.Decimal(12, 2)
+  taxAmount         Decimal          @db.Decimal(12, 2)
+  totalAmount       Decimal          @db.Decimal(12, 2)
+  status            InvoiceStatus    @default(DRAFT)
+  pdfUrl            String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  lineItems InvoiceLineItem[]
+
+  @@index([customerId, status])
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id          String  @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(12, 2)
+  lineTotal   Decimal @db.Decimal(12, 2)
+
+  @@index([invoiceId])
+  @@map("invoice_line_items")
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSED
+  REJECTED
+}
+
+model Refund {
+  id                    String       @id @default(uuid())
+  paymentId             String
+  payment               Payment      @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  amount                Decimal      @db.Decimal(12, 2)
+  reason                String
+  status                RefundStatus @default(PENDING)
+  providerRefundId      String?      @unique
+  processedByEmployeeId String?
+  processedByEmployee   Employee?    @relation(fields: [processedByEmployeeId], references: [id], onDelete: SetNull)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  @@index([paymentId])
+  @@index([status])
+  @@map("refunds")
+}
+
+enum RevenueSourceType {
+  RENTAL
+  SALE
+  FEE
+  REFUND
+}
+
+// Append-only ledger, not a mutable rollup — revenue reports are computed
+// by summing this table (or a materialized view over it), so historical
+// figures never drift out from under a report that already ran.
+model RevenueLedgerEntry {
+  id                String            @id @default(uuid())
+  sourceType        RevenueSourceType
+  bookingId         String?
+  booking           Booking?          @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  saleTransactionId String?
+  saleTransaction   SaleTransaction?  @relation(fields: [saleTransactionId], references: [id], onDelete: SetNull)
+  locationId        String?
+  location          Location?         @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  amount            Decimal           @db.Decimal(12, 2)
+  description       String?
+  occurredAt        DateTime          @default(now())
+
+  @@index([sourceType, occurredAt])
+  @@index([locationId, occurredAt])
+  @@map("revenue_ledger_entries")
+}

@@ -1,0 +1,121 @@
+// ============================================================
+// OPERATIONS — Maintenance, Service, Inspections
+// ============================================================
+
+model Vendor {
+  id          String    @id @default(uuid())
+  name        String
+  contactName String?
+  phone       String?
+  email       String?
+  specialty   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  maintenanceRecords MaintenanceRecord[]
+
+  @@map("vendors")
+}
+
+enum MaintenanceType {
+  ROUTINE
+  REPAIR
+  INSPECTION_FOLLOWUP
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model MaintenanceRecord {
+  id             String            @id @default(uuid())
+  carId          String
+  car            Car               @relation(fields: [carId], references: [id], onDelete: Cascade)
+  vendorId       String?
+  vendor         Vendor?           @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  type           MaintenanceType
+  status         MaintenanceStatus @default(SCHEDULED)
+  description    String
+  scheduledStart DateTime
+  scheduledEnd   DateTime
+  actualStart    DateTime?
+  actualEnd      DateTime?
+  cost           Decimal?          @db.Decimal(12, 2)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  availabilityBlock AvailabilityBlock?
+
+  @@index([carId, status])
+  @@index([vendorId])
+  @@map("maintenance_records")
+}
+
+model ServiceSchedule {
+  id              String    @id @default(uuid())
+  carId           String
+  car             Car       @relation(fields: [carId], references: [id], onDelete: Cascade)
+  serviceType     String
+  intervalKm      Int?
+  intervalMonths  Int?
+  lastServiceDate DateTime?
+  nextDueDate     DateTime?
+  nextDueOdometer Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([carId])
+  @@index([nextDueDate])
+  @@map("service_schedules")
+}
+
+enum InspectionType {
+  PRE_RENTAL
+  POST_RENTAL
+  PERIODIC
+  PRE_SALE
+}
+
+enum OverallCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+}
+
+model InspectionReport {
+  id                    String           @id @default(uuid())
+  carId                 String
+  car                   Car              @relation(fields: [carId], references: [id], onDelete: Cascade)
+  bookingId             String?
+  booking               Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  inspectedByEmployeeId String
+  inspectedByEmployee   Employee         @relation(fields: [inspectedByEmployeeId], references: [id], onDelete: Restrict)
+  inspectionType        InspectionType
+  odometerReading       Int
+  overallCondition      OverallCondition
+  notes                 String?
+  createdAt             DateTime         @default(now())
+
+  checklistItems InspectionChecklistItem[]
+
+  @@index([carId, inspectionType])
+  @@index([bookingId])
+  @@map("inspection_reports")
+}
+
+model InspectionChecklistItem {
+  id                 String           @id @default(uuid())
+  inspectionReportId String
+  inspectionReport   InspectionReport @relation(fields: [inspectionReportId], references: [id], onDelete: Cascade)
+  itemName           String
+  passed             Boolean
+  notes              String?
+
+  @@index([inspectionReportId])
+  @@map("inspection_checklist_items")
+}

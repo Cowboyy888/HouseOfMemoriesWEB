@@ -1,0 +1,136 @@
+// ============================================================
+// RENTAL SYSTEM
+// ============================================================
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Booking {
+  id                 String          @id @default(uuid())
+  bookingNumber      String          @unique
+  customerId         String
+  customer           CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  carId              String
+  car                Car             @relation(fields: [carId], references: [id], onDelete: Restrict)
+  pickupLocationId   String
+  pickupLocation     Location        @relation("PickupLocation", fields: [pickupLocationId], references: [id], onDelete: Restrict)
+  dropoffLocationId  String
+  dropoffLocation    Location        @relation("DropoffLocation", fields: [dropoffLocationId], references: [id], onDelete: Restrict)
+  startDate          DateTime
+  endDate            DateTime
+  actualPickupAt     DateTime?
+  actualReturnAt     DateTime?
+  status             BookingStatus   @default(PENDING)
+  dailyRate          Decimal         @db.Decimal(12, 2)
+  totalAmount        Decimal         @db.Decimal(12, 2)
+  depositAmount      Decimal         @db.Decimal(12, 2)
+  currency           String          @default("USD")
+  cancelledAt        DateTime?
+  cancellationReason String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  extensions           BookingExtension[]
+  returnReport         ReturnReport?
+  damageReports        DamageReport[]
+  availabilityBlock    AvailabilityBlock?
+  payments             Payment[]
+  invoices             Invoice[]
+  reviews              Review[]
+  inspectionReports    InspectionReport[]
+  revenueLedgerEntries RevenueLedgerEntry[]
+
+  @@index([carId, startDate, endDate])
+  @@index([customerId, status])
+  @@index([status, startDate])
+  @@map("bookings")
+}
+
+enum ExtensionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model BookingExtension {
+  id               String          @id @default(uuid())
+  bookingId        String
+  booking          Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  originalEndDate  DateTime
+  newEndDate       DateTime
+  additionalAmount Decimal         @db.Decimal(12, 2)
+  status           ExtensionStatus @default(PENDING)
+  requestedAt      DateTime        @default(now())
+  resolvedAt       DateTime?
+
+  @@index([bookingId])
+  @@map("booking_extensions")
+}
+
+model ReturnReport {
+  id                    String    @id @default(uuid())
+  bookingId             String    @unique
+  booking               Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  returnedAt            DateTime
+  odometerReading       Int
+  fuelLevel             Int
+  conditionNotes        String?
+  inspectedByEmployeeId String?
+  inspectedByEmployee   Employee? @relation(fields: [inspectedByEmployeeId], references: [id], onDelete: SetNull)
+  createdAt             DateTime  @default(now())
+
+  damageReport DamageReport?
+
+  @@map("return_reports")
+}
+
+enum DamageSeverity {
+  MINOR
+  MODERATE
+  SEVERE
+}
+
+enum DamageStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  BILLED
+}
+
+model DamageReport {
+  id                   String         @id @default(uuid())
+  bookingId            String
+  booking              Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  returnReportId       String?        @unique
+  returnReport         ReturnReport?  @relation(fields: [returnReportId], references: [id], onDelete: SetNull)
+  reportedByEmployeeId String
+  reportedByEmployee   Employee       @relation(fields: [reportedByEmployeeId], references: [id], onDelete: Restrict)
+  description          String
+  severity             DamageSeverity
+  estimatedCost        Decimal        @db.Decimal(12, 2)
+  status               DamageStatus   @default(OPEN)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  images DamageReportImage[]
+
+  @@index([bookingId])
+  @@index([status])
+  @@map("damage_reports")
+}
+
+model DamageReportImage {
+  id             String       @id @default(uuid())
+  damageReportId String
+  damageReport   DamageReport @relation(fields: [damageReportId], references: [id], onDelete: Cascade)
+  url            String
+  createdAt      DateTime     @default(now())
+
+  @@map("damage_report_images")
+}

@@ -1,0 +1,15 @@
+// Base datasource + generator. Domain models live in sibling .prisma files
+// in this folder (multi-file schema, Prisma ORM 6.7+, GA — no previewFeatures
+// flag needed). Prisma merges every *.prisma file in this directory into one
+// schema graph; see vault/03 Database/Schema-Overview.md for the file map.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Connection URL lives in prisma.config.ts (CLI: migrate/studio) and is
+// passed to PrismaClient via a driver adapter at runtime (Prisma 7 no
+// longer reads `url` from the schema file).
+datasource db {
+  provider = "postgresql"
+}

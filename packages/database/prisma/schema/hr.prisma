@@ -1,0 +1,161 @@
+// ============================================================
+// HR MODULE
+// ============================================================
+
+enum EmploymentStatus {
+  ACTIVE
+  ON_LEAVE
+  TERMINATED
+}
+
+model Employee {
+  id               String           @id @default(uuid())
+  userId           String           @unique
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employeeCode     String           @unique
+  locationId       String
+  location         Location         @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  departmentId     String?
+  department       Department?      @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  jobTitle         String
+  hireDate         DateTime
+  terminationDate  DateTime?
+  employmentStatus EmploymentStatus @default(ACTIVE)
+  managerId        String?
+  manager          Employee?        @relation("ManagerReports", fields: [managerId], references: [id], onDelete: SetNull)
+  reports          Employee[]       @relation("ManagerReports")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
+
+  attendances            Attendance[]
+  payrolls               Payroll[]
+  returnReportsInspected ReturnReport[]
+  damageReportsFiled     DamageReport[]
+  salesTransactions      SaleTransaction[]
+  contractsSigned        SalesContract[]
+  refundsProcessed       Refund[]
+  inspectionReports      InspectionReport[]
+  licensesVerified       DriverLicense[]
+
+  @@index([locationId])
+  @@index([departmentId])
+  @@index([employmentStatus])
+  @@map("employees")
+}
+
+model Department {
+  id         String    @id @default(uuid())
+  name       String
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  employees   Employee[]
+  salaryRules SalaryRule[]
+
+  @@unique([name, locationId])
+  @@map("departments")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  ON_LEAVE
+}
+
+model Attendance {
+  id          String           @id @default(uuid())
+  employeeId  String
+  employee    Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date        DateTime         @db.Date
+  clockIn     DateTime?
+  clockOut    DateTime?
+  status      AttendanceStatus
+  hoursWorked Decimal?         @db.Decimal(5, 2)
+  createdAt   DateTime         @default(now())
+
+  @@unique([employeeId, date])
+  @@index([date, status])
+  @@map("attendance_records")
+}
+
+enum PayrollStatus {
+  DRAFT
+  APPROVED
+  PAID
+}
+
+model Payroll {
+  id             String        @id @default(uuid())
+  employeeId     String
+  employee       Employee      @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  payPeriodStart DateTime      @db.Date
+  payPeriodEnd   DateTime      @db.Date
+  grossPay       Decimal       @db.Decimal(12, 2)
+  deductions     Decimal       @db.Decimal(12, 2)
+  netPay         Decimal       @db.Decimal(12, 2)
+  status         PayrollStatus @default(DRAFT)
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  lineItems PayrollLineItem[]
+
+  @@unique([employeeId, payPeriodStart, payPeriodEnd])
+  @@index([status])
+  @@map("payrolls")
+}
+
+enum SalaryRuleType {
+  BASE_SALARY
+  OVERTIME
+  BONUS
+  DEDUCTION_TAX
+  DEDUCTION_INSURANCE
+  DEDUCTION_OTHER
+}
+
+enum SalaryCalculationType {
+  FLAT
+  PERCENTAGE
+  HOURLY
+}
+
+// `value` holds either a flat money amount, a percentage, or an hourly
+// rate depending on calculationType — the payroll engine (Sprint-future
+// Backend feature) interprets it accordingly.
+model SalaryRule {
+  id                    String                @id @default(uuid())
+  name                  String
+  description           String?
+  ruleType              SalaryRuleType
+  calculationType       SalaryCalculationType
+  value                 Decimal               @db.Decimal(12, 4)
+  appliesToDepartmentId String?
+  appliesToDepartment   Department?           @relation(fields: [appliesToDepartmentId], references: [id], onDelete: SetNull)
+  isActive              Boolean               @default(true)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  payrollLineItems PayrollLineItem[]
+
+  @@map("salary_rules")
+}
+
+model PayrollLineItem {
+  id           String     @id @default(uuid())
+  payrollId    String
+  payroll      Payroll    @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  salaryRuleId String
+  salaryRule   SalaryRule @relation(fields: [salaryRuleId], references: [id], onDelete: Restrict)
+  description  String?
+  amount       Decimal    @db.Decimal(12, 2)
+
+  @@index([payrollId])
+  @@map("payroll_line_items")
+}

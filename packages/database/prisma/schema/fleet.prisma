@@ -1,0 +1,248 @@
+// ============================================================
+// BUSINESS CORE — Fleet & Catalog
+// One Vehicle entity shared by Rental + Sales (ADR-002 in
+// vault/01 Vision/Decisions.md).
+// ============================================================
+
+model Brand {
+  id              String    @id @default(uuid())
+  name            String    @unique
+  slug            String    @unique
+  logoUrl         String?
+  countryOfOrigin String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  cars Car[]
+
+  @@map("brands")
+}
+
+model CarCategory {
+  id          String        @id @default(uuid())
+  name        String
+  slug        String        @unique
+  description String?
+  parentId    String?
+  parent      CarCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    CarCategory[] @relation("CategoryHierarchy")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  cars         Car[]
+  pricingRules PricingRule[]
+
+  @@index([parentId])
+  @@map("car_categories")
+}
+
+model Location {
+  id           String    @id @default(uuid())
+  name         String
+  code         String    @unique
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  postalCode   String
+  country      String
+  latitude     Decimal?  @db.Decimal(9, 6)
+  longitude    Decimal?  @db.Decimal(9, 6)
+  phone        String?
+  email        String?
+  timezone     String
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  carsAtLocation       Car[]                @relation("CarCurrentLocation")
+  pickupBookings       Booking[]            @relation("PickupLocation")
+  dropoffBookings      Booking[]            @relation("DropoffLocation")
+  employees            Employee[]
+  departments          Department[]
+  revenueLedgerEntries RevenueLedgerEntry[]
+  preferredByCustomers CustomerProfile[]
+
+  @@index([isActive])
+  @@map("locations")
+}
+
+enum ListingType {
+  RENTAL
+  SALE
+  BOTH
+}
+
+enum CarStatus {
+  AVAILABLE
+  RESERVED
+  RENTED
+  SOLD
+  MAINTENANCE
+  INACTIVE
+}
+
+enum CarCondition {
+  NEW
+  USED
+  CERTIFIED_PRE_OWNED
+}
+
+enum FuelType {
+  GASOLINE
+  DIESEL
+  HYBRID
+  ELECTRIC
+  PLUG_IN_HYBRID
+}
+
+enum TransmissionType {
+  AUTOMATIC
+  MANUAL
+  CVT
+}
+
+model Car {
+  id                String           @id @default(uuid())
+  vin               String           @unique
+  licensePlate      String?          @unique
+  brandId           String
+  brand             Brand            @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  categoryId        String
+  category          CarCategory      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  model             String
+  year              Int
+  trim              String?
+  color             String
+  mileage           Int              @default(0)
+  fuelType          FuelType
+  transmission      TransmissionType
+  seatingCapacity   Int
+  condition         CarCondition
+  listingType       ListingType
+  status            CarStatus        @default(AVAILABLE)
+  dailyRentalRate   Decimal?         @db.Decimal(12, 2)
+  salePrice         Decimal?         @db.Decimal(12, 2)
+  currentLocationId String?
+  currentLocation   Location?        @relation("CarCurrentLocation", fields: [currentLocationId], references: [id], onDelete: SetNull)
+  acquiredAt        DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+
+  images             CarImage[]
+  featureAssignments CarFeatureAssignment[]
+  pricingRules       PricingRule[]
+  availabilityBlocks AvailabilityBlock[]
+  bookings           Booking[]
+  saleTransactions   SaleTransaction[]
+  maintenanceRecords MaintenanceRecord[]
+  serviceSchedules   ServiceSchedule[]
+  inspectionReports  InspectionReport[]
+  reviews            Review[]
+
+  @@index([status, listingType])
+  @@index([brandId])
+  @@index([categoryId])
+  @@index([currentLocationId])
+  @@map("cars")
+}
+
+model CarImage {
+  id        String   @id @default(uuid())
+  carId     String
+  car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  position  Int      @default(0)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([carId])
+  @@map("car_images")
+}
+
+model CarFeature {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  icon      String?
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  assignments CarFeatureAssignment[]
+
+  @@map("car_features")
+}
+
+model CarFeatureAssignment {
+  carId     String
+  featureId String
+  car       Car        @relation(fields: [carId], references: [id], onDelete: Cascade)
+  feature   CarFeature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@id([carId, featureId])
+  @@map("car_feature_assignments")
+}
+
+enum PricingRuleType {
+  BASE
+  WEEKEND
+  SEASONAL
+  LONG_TERM_DISCOUNT
+  PROMOTIONAL
+}
+
+// carId set = override for one specific vehicle; categoryId set = default
+// for a whole category. At least one of the two must be populated —
+// enforced at the application layer (see Security-Considerations.md).
+model PricingRule {
+  id         String          @id @default(uuid())
+  name       String
+  ruleType   PricingRuleType
+  carId      String?
+  car        Car?            @relation(fields: [carId], references: [id], onDelete: Cascade)
+  categoryId String?
+  category   CarCategory?    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  multiplier Decimal?        @db.Decimal(5, 4)
+  flatRate   Decimal?        @db.Decimal(12, 2)
+  minDays    Int?
+  validFrom  DateTime?
+  validTo    DateTime?
+  priority   Int             @default(0)
+  isActive   Boolean         @default(true)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([carId, isActive])
+  @@index([categoryId, isActive])
+  @@map("pricing_rules")
+}
+
+enum AvailabilityReason {
+  BOOKED
+  MAINTENANCE
+  ADMIN_HOLD
+}
+
+// Range-based blocks, not a per-day calendar row: a car has a handful of
+// blocks a year, not 365 rows. See Schema-Overview.md for the rationale
+// and the recommended Postgres exclusion-constraint follow-up migration.
+model AvailabilityBlock {
+  id                  String             @id @default(uuid())
+  carId               String
+  car                 Car                @relation(fields: [carId], references: [id], onDelete: Cascade)
+  startDate           DateTime
+  endDate             DateTime
+  reason              AvailabilityReason
+  bookingId           String?            @unique
+  booking             Booking?           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  maintenanceRecordId String?            @unique
+  maintenanceRecord   MaintenanceRecord? @relation(fields: [maintenanceRecordId], references: [id], onDelete: Cascade)
+  createdAt           DateTime           @default(now())
+
+  @@index([carId, startDate, endDate])
+  @@map("availability_blocks")
+}

@@ -1,0 +1,116 @@
+// ============================================================
+// CUSTOMER SYSTEM
+// ============================================================
+
+model CustomerProfile {
+  id                  String    @id @default(uuid())
+  userId              String    @unique
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone               String?
+  dateOfBirth         DateTime? @db.Date
+  addressLine1        String?
+  addressLine2        String?
+  city                String?
+  state               String?
+  postalCode          String?
+  country             String?
+  loyaltyPoints       Int       @default(0)
+  preferredLocationId String?
+  preferredLocation   Location? @relation(fields: [preferredLocationId], references: [id], onDelete: SetNull)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  driverLicenses      DriverLicense[]
+  bookings            Booking[]
+  saleTransactions    SaleTransaction[]
+  payments            Payment[]
+  invoices            Invoice[]
+  reviews             Review[]
+  loyaltyTransactions LoyaltyTransaction[]
+
+  @@index([preferredLocationId])
+  @@map("customer_profiles")
+}
+
+enum LicenseVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+model DriverLicense {
+  id                   String                    @id @default(uuid())
+  customerId           String
+  customer             CustomerProfile           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  licenseNumber        String
+  issuingState         String
+  issuingCountry       String
+  issueDate            DateTime                  @db.Date
+  expiryDate           DateTime                  @db.Date
+  documentImageUrl     String
+  verificationStatus   LicenseVerificationStatus @default(PENDING)
+  verifiedByEmployeeId String?
+  verifiedByEmployee   Employee?                 @relation(fields: [verifiedByEmployeeId], references: [id], onDelete: SetNull)
+  verifiedAt           DateTime?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+
+  @@unique([licenseNumber, issuingState, issuingCountry])
+  @@index([customerId])
+  @@index([verificationStatus])
+  @@map("driver_licenses")
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  HIDDEN
+  FLAGGED
+}
+
+model Review {
+  id                String           @id @default(uuid())
+  customerId        String
+  customer          CustomerProfile  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  carId             String?
+  car               Car?             @relation(fields: [carId], references: [id], onDelete: SetNull)
+  bookingId         String?
+  booking           Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  saleTransactionId String?
+  saleTransaction   SaleTransaction? @relation(fields: [saleTransactionId], references: [id], onDelete: SetNull)
+  rating            Int
+  comment           String?
+  status            ReviewStatus     @default(PUBLISHED)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([carId, status])
+  @@index([customerId])
+  @@map("reviews")
+}
+
+enum LoyaltyReason {
+  EARNED_BOOKING
+  EARNED_SALE
+  REDEEMED
+  EXPIRED
+  ADJUSTED
+}
+
+// Append-only ledger backing CustomerProfile.loyaltyPoints — the counter
+// is a read-optimized cache, this table is the source of truth and audit
+// trail for how it got there.
+model LoyaltyTransaction {
+  id          String          @id @default(uuid())
+  customerId  String
+  customer    CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  points      Int
+  reason      LoyaltyReason
+  referenceId String?
+  expiresAt   DateTime?
+  createdAt   DateTime        @default(now())
+
+  @@index([customerId, createdAt])
+  @@map("loyalty_transactions")
+}

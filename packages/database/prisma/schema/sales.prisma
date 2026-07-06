@@ -1,0 +1,105 @@
+// ============================================================
+// SALES SYSTEM
+// ============================================================
+
+enum SaleStatus {
+  INQUIRY
+  RESERVED
+  CONTRACT_SIGNED
+  PAID
+  DELIVERED
+  CANCELLED
+}
+
+model SaleTransaction {
+  id                 String          @id @default(uuid())
+  saleNumber         String          @unique
+  carId              String
+  car                Car             @relation(fields: [carId], references: [id], onDelete: Restrict)
+  customerId         String
+  customer           CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  salesEmployeeId    String
+  salesEmployee      Employee        @relation(fields: [salesEmployeeId], references: [id], onDelete: Restrict)
+  salePrice          Decimal         @db.Decimal(12, 2)
+  status             SaleStatus      @default(INQUIRY)
+  saleDate           DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  installmentPlan      InstallmentPlan?
+  contract             SalesContract?
+  payments             Payment[]
+  invoices             Invoice[]
+  reviews              Review[]
+  revenueLedgerEntries RevenueLedgerEntry[]
+
+  @@index([carId])
+  @@index([customerId, status])
+  @@map("sale_transactions")
+}
+
+enum InstallmentPlanStatus {
+  ACTIVE
+  COMPLETED
+  DEFAULTED
+}
+
+model InstallmentPlan {
+  id                   String                @id @default(uuid())
+  saleTransactionId    String                @unique
+  saleTransaction      SaleTransaction       @relation(fields: [saleTransactionId], references: [id], onDelete: Cascade)
+  principalAmount      Decimal               @db.Decimal(12, 2)
+  downPayment          Decimal               @db.Decimal(12, 2)
+  interestRate         Decimal               @db.Decimal(5, 4)
+  numberOfInstallments Int
+  startDate            DateTime
+  status               InstallmentPlanStatus @default(ACTIVE)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  paymentSchedules PaymentSchedule[]
+
+  @@map("installment_plans")
+}
+
+enum PaymentScheduleStatus {
+  PENDING
+  PAID
+  LATE
+  DEFAULTED
+}
+
+model PaymentSchedule {
+  id                String                @id @default(uuid())
+  installmentPlanId String
+  installmentPlan   InstallmentPlan       @relation(fields: [installmentPlanId], references: [id], onDelete: Cascade)
+  installmentNumber Int
+  dueDate           DateTime
+  amountDue         Decimal               @db.Decimal(12, 2)
+  amountPaid        Decimal               @default(0) @db.Decimal(12, 2)
+  paidAt            DateTime?
+  status            PaymentScheduleStatus @default(PENDING)
+
+  payments Payment[]
+
+  @@unique([installmentPlanId, installmentNumber])
+  @@index([status, dueDate])
+  @@map("payment_schedules")
+}
+
+model SalesContract {
+  id                 String          @id @default(uuid())
+  saleTransactionId  String          @unique
+  saleTransaction    SaleTransaction @relation(fields: [saleTransactionId], references: [id], onDelete: Cascade)
+  contractNumber     String          @unique
+  documentUrl        String
+  termsVersion       String
+  signedByCustomerAt DateTime?
+  signedByEmployeeId String?
+  signedByEmployee   Employee?       @relation(fields: [signedByEmployeeId], references: [id], onDelete: SetNull)
+  createdAt          DateTime        @default(now())
+
+  @@map("sales_contracts")
+}

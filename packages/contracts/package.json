@@ -1,0 +1,18 @@
+{
+  "name": "@drivehub/contracts",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Shared Zod schemas and inferred types for API request/response contracts between apps/api and apps/web.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
