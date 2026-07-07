@@ -1,60 +1,11 @@
 "use client";
 
 import { CarFront, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { env } from "@/lib/env";
-
-type RecommendationItem = {
-  carId: string;
-  brand: string;
-  model: string;
-  year: number;
-  dailyRentalRate: string;
-  score: number;
-  reasons: string[];
-};
+import { useRecommendationsQuery } from "@/features/ai/hooks";
 
 export function AiRecommendations() {
-  const [items, setItems] = useState<RecommendationItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadRecommendations() {
-      try {
-        const response = await fetch(`${env.apiUrl}/ai/recommendations?limit=3`, {
-          credentials: "include",
-        });
-
-        const payload = await response.json().catch(() => undefined);
-
-        if (!response.ok) {
-          throw new Error((payload as { message?: string } | undefined)?.message ?? "Recommendations are unavailable right now.");
-        }
-
-        if (active) {
-          setItems(((payload as { items?: RecommendationItem[] } | undefined)?.items ?? []) as RecommendationItem[]);
-          setError(null);
-        }
-      } catch (caughtError) {
-        if (active) {
-          setError(caughtError instanceof Error ? caughtError.message : "Recommendations are unavailable right now.");
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void loadRecommendations();
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  const { data, isLoading, error } = useRecommendationsQuery({ limit: 3 });
+  const items = data?.items ?? [];
 
   return (
     <section className="mt-8 w-full rounded-3xl border bg-background/80 p-6 shadow-sm">
@@ -68,13 +19,15 @@ export function AiRecommendations() {
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
           Loading recommendations…
         </div>
       ) : error ? (
-        <p className="mt-5 text-sm text-muted-foreground">{error}</p>
+        <p className="mt-5 text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : "Recommendations are unavailable right now."}
+        </p>
       ) : items.length === 0 ? (
         <p className="mt-5 text-sm text-muted-foreground">No recommendations available just yet.</p>
       ) : (

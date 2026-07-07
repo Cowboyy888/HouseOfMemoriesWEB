@@ -2,13 +2,9 @@
 
 import { ArrowUpRight, Loader2, Sparkles } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import type { ChatMessage } from "@drivehub/contracts";
 import { Button } from "@/components/ui/button";
-import { env } from "@/lib/env";
-
-type ChatMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
+import { useChatMutation } from "@/features/ai/hooks";
 
 const starterPrompts = [
   "What cars are available today?",
@@ -24,43 +20,29 @@ export function AiAssistant() {
     },
   ]);
   const [input, setInput] = useState("");
-  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const chatMutation = useChatMutation();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const trimmed = input.trim();
-    if (!trimmed || isSending) {
+    if (!trimmed || chatMutation.isPending) {
       return;
     }
 
-    const nextUserMessage = { role: "user" as const, content: trimmed };
+    const nextUserMessage: ChatMessage = { role: "user", content: trimmed };
     const requestMessages = [...messages, nextUserMessage];
 
     setMessages((current) => [...current, nextUserMessage]);
     setInput("");
-    setIsSending(true);
     setError(null);
 
     try {
-      const response = await fetch(`${env.apiUrl}/ai/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: requestMessages }),
-      });
-
-      const data = await response.json().catch(() => undefined);
-
-      if (!response.ok) {
-        throw new Error((data as { message?: string } | undefined)?.message ?? "The assistant could not answer right now.");
-      }
-
-      setMessages((current) => [...current, { role: "assistant", content: data.reply ?? "I’m not sure how to answer that yet." }]);
+      const data = await chatMutation.mutateAsync(requestMessages);
+      setMessages((current) => [...current, { role: "assistant", content: data.reply || "I’m not sure how to answer that yet." }]);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "The assistant could not answer right now.");
-    } finally {
-      setIsSending(false);
     }
   }
 
@@ -111,8 +93,8 @@ export function AiAssistant() {
         />
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">{error ?? "Responses are grounded in the current catalog and policies."}</p>
-          <Button type="submit" disabled={isSending || !input.trim()}>
-            {isSending ? (
+          <Button type="submit" disabled={chatMutation.isPending || !input.trim()}>
+            {chatMutation.isPending ? (
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />
                 Thinking
