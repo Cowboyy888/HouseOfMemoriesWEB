@@ -1,40 +1,25 @@
-# Deployment Architecture
+# deployment/
 
-## Overview
+Local Docker Compose stack and supporting ops docs for self-hosting this
+monorepo outside of the actual production setup.
 
-This repository is structured as a Turborepo monorepo with:
-- apps/web: public-facing Next.js frontend
-- apps/admin: admin Next.js frontend
-- apps/api: NestJS backend API
-- packages/database: Prisma schema and migrations
+**Production today is not this stack** — see `vault/08 Deployment/Production.md`
+(Vercel for `apps/web`, Railway for `apps/api`, Neon for Postgres — chosen
+explicitly over Cloudflare/Docker Compose, per ADR-011/012 in
+`vault/01 Vision/Decisions.md`). This folder is for local development parity
+and a possible future self-hosted alternative.
 
-The production deployment architecture uses:
-- Docker containers for each app
-- Docker Compose for local orchestration and future staging environments
-- GitHub Actions for CI/CD
-- Cloudflare for edge delivery, R2 storage, and image hosting
-- PostgreSQL for transactional data
-- Redis for caching and queues
+## Contents
+- `architecture.md` — topology diagram and container responsibilities for
+  this local/self-hosted stack.
+- `../docker-compose.yml` — Postgres + nginx + all three apps, orchestrated
+  locally.
+- `ops-runbook.md` — health checks, rollback, backup verification.
+- `security-checklist.md` — baseline hardening checklist.
+- `backup.sh` — Postgres dump helper for this stack's `postgres` service.
+- `nginx.conf` — reverse proxy config mounted by the `nginx` compose service.
 
-## Proposed topology
-
-- Internet -> Cloudflare CDN / reverse proxy
-- Cloudflare -> app containers or hosted services
-- App containers -> PostgreSQL + Redis
-- Static assets and uploaded media -> Cloudflare R2
-- Logs and metrics -> centralized observability stack
-
-## Container strategy
-
-- web: Next.js production build
-- admin: Next.js production build
-- api: NestJS production build
-- database: PostgreSQL service
-- redis: Redis service
-
-## Next steps
-
-- Add Dockerfiles for each service
-- Add compose configuration
-- Add CI workflows
-- Add deployment scripts and health checks
+## Running locally
+```bash
+../scripts/deploy.sh   # docker compose up -d --build
+```
