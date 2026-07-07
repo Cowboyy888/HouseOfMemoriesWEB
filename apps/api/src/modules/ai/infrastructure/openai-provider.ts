@@ -9,11 +9,13 @@ const DEFAULT_MODEL = "gpt-4o-mini";
 @Injectable()
 export class OpenAiProvider implements AiProviderPort {
   readonly provider = "OPENAI" as const;
+  readonly configured: boolean;
   private readonly client: OpenAI | null;
   private readonly model = process.env.OPENAI_MODEL ?? DEFAULT_MODEL;
 
   constructor() {
     const apiKey = process.env.OPENAI_API_KEY;
+    this.configured = Boolean(apiKey);
     this.client = apiKey ? new OpenAI({ apiKey }) : null;
   }
 

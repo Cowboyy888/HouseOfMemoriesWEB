@@ -22,7 +22,7 @@ function makeFactory(provider: AiProviderPort): AiProviderFactory {
 }
 
 function makeProvider(result: AiChatResult): AiProviderPort {
-  return { provider: "OPENAI", chat: vi.fn().mockResolvedValue(result) };
+  return { provider: "OPENAI", configured: true, chat: vi.fn().mockResolvedValue(result) };
 }
 
 const messages: ChatMessage[] = [{ role: "user", content: "Can I speak to a human?" }];
@@ -51,7 +51,11 @@ describe("CustomerAssistantUseCase", () => {
   });
 
   it("logs the failure and re-throws when the provider call fails", async () => {
-    const provider: AiProviderPort = { provider: "OPENAI", chat: vi.fn().mockRejectedValue(new Error("rate limited")) };
+    const provider: AiProviderPort = {
+      provider: "OPENAI",
+      configured: true,
+      chat: vi.fn().mockRejectedValue(new Error("rate limited")),
+    };
     const logs = makeLogs();
     const useCase = new CustomerAssistantUseCase(makeFactory(provider), makeContext(), logs);
 

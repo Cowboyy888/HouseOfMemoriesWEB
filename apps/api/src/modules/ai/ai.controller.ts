@@ -5,7 +5,7 @@ import { PermissionsGuard } from "../../shared/auth/permissions.guard";
 import { RequirePermissions } from "../../shared/auth/require-permissions.decorator";
 import { CUSTOMER_PROFILE_RESOLVER, type CustomerProfileResolver } from "../../shared/customer/customer-profile-resolver";
 import { ZodValidationPipe } from "../../shared/validation/zod-validation.pipe";
-import { BuildAiReportingSummaryUseCase } from "./application/build-ai-reporting-summary.use-case";
+import { AiProviderFactory } from "./infrastructure/ai-provider.factory";
 import { CustomerAssistantUseCase } from "./application/customer-assistant.use-case";
 import { ListAiRequestLogsUseCase } from "./application/list-ai-request-logs.use-case";
 import { RecommendVehiclesUseCase } from "./application/recommend-vehicles.use-case";
@@ -16,7 +16,7 @@ export class AiController {
     private readonly customerAssistantUseCase: CustomerAssistantUseCase,
     private readonly listAiRequestLogsUseCase: ListAiRequestLogsUseCase,
     private readonly recommendVehiclesUseCase: RecommendVehiclesUseCase,
-    private readonly buildAiReportingSummaryUseCase: BuildAiReportingSummaryUseCase,
+    private readonly aiProviderFactory: AiProviderFactory,
     @Inject(CUSTOMER_PROFILE_RESOLVER) private readonly customerProfiles: CustomerProfileResolver,
   ) {}
 
@@ -36,21 +36,15 @@ export class AiController {
     return this.listAiRequestLogsUseCase.execute(Number(limit));
   }
 
+  // Cheap "is a provider configured" signal for the admin dashboard status
+  // card — must never invoke the actual chat use-case, which would bill a
+  // real LLM call and write a synthetic AiRequestLog row on every page load.
   @UseGuards(PermissionsGuard)
   @RequirePermissions("report:view")
-  @Get("reporting")
-  async reporting(
-    @Query("totalRequests") totalRequests = "0",
-    @Query("successfulRequests") successfulRequests = "0",
-    @Query("escalatedRequests") escalatedRequests = "0",
-    @Query("avgLatencyMs") avgLatencyMs = "0",
-  ) {
-    return this.buildAiReportingSummaryUseCase.execute({
-      totalRequests: Number(totalRequests),
-      successfulRequests: Number(successfulRequests),
-      escalatedRequests: Number(escalatedRequests),
-      avgLatencyMs: Number(avgLatencyMs),
-    });
+  @Get("status")
+  status() {
+    const provider = this.aiProviderFactory.get();
+    return { configured: provider.configured, provider: provider.provider };
   }
 
   // Public for the same reason — recommendations are useful before signing

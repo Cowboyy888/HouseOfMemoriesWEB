@@ -20,5 +20,9 @@ export const AI_PROVIDER = Symbol("AI_PROVIDER");
  * shape into the port. */
 export interface AiProviderPort {
   readonly provider: "OPENAI" | "ANTHROPIC";
+  /** Whether this provider's API key is actually set — lets callers (e.g.
+   * an admin status card) report readiness without spending a real
+   * request against `chat()`. */
+  readonly configured: boolean;
   chat(system: string, messages: AiChatMessage[]): Promise<AiChatResult>;
 }

@@ -1,5 +1,4 @@
 import { Module } from "@nestjs/common";
-import { BuildAiReportingSummaryUseCase } from "./application/build-ai-reporting-summary.use-case";
 import { CustomerAssistantUseCase } from "./application/customer-assistant.use-case";
 import { ListAiRequestLogsUseCase } from "./application/list-ai-request-logs.use-case";
 import { RecommendVehiclesUseCase } from "./application/recommend-vehicles.use-case";
@@ -17,7 +16,6 @@ import { AiController } from "./ai.controller";
 @Module({
   controllers: [AiController],
   providers: [
-    BuildAiReportingSummaryUseCase,
     CustomerAssistantUseCase,
     ListAiRequestLogsUseCase,
     RecommendVehiclesUseCase,

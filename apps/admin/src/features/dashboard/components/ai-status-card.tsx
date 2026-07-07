@@ -2,8 +2,8 @@
 
 import { BrainCircuit, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import type { AiStatusResponse } from "@drivehub/contracts";
 import { apiFetch } from "@/lib/api-client";
-import { env } from "@/lib/env";
 
 function statusTone(status: string) {
   switch (status) {
@@ -36,18 +36,13 @@ export function AiStatusCard() {
 
     async function loadStatus() {
       try {
-        const [response, activity] = await Promise.all([
-          fetch(`${env.apiUrl}/ai/chat`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messages: [{ role: "user", content: "Status check" }] }),
-            credentials: "include",
-          }),
+        const [aiStatus, activity] = await Promise.all([
+          apiFetch<AiStatusResponse>("/ai/status"),
           apiFetch<{ items: RecentAiActivity[] }>("/ai/logs?limit=3").catch(() => ({ items: [] })),
         ]);
 
         if (active) {
-          setStatus(response.ok ? "ready" : "degraded");
+          setStatus(aiStatus.configured ? "ready" : "degraded");
           setRecentActivity(activity.items ?? []);
         }
       } catch {
@@ -74,7 +69,7 @@ export function AiStatusCard() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-medium">AI assistant status</p>
-          <p className="mt-1 text-sm text-muted-foreground">The admin view reflects whether the assistant endpoint is responsive.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Reflects whether an OpenAI/Anthropic API key is configured — no live model call is made to check.</p>
         </div>
         <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
           <BrainCircuit className="size-4" />

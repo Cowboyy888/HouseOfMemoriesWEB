@@ -9,11 +9,13 @@ const MAX_TOKENS = 1024;
 @Injectable()
 export class AnthropicProvider implements AiProviderPort {
   readonly provider = "ANTHROPIC" as const;
+  readonly configured: boolean;
   private readonly client: Anthropic | null;
   private readonly model = process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL;
 
   constructor() {
     const apiKey = process.env.ANTHROPIC_API_KEY;
+    this.configured = Boolean(apiKey);
     this.client = apiKey ? new Anthropic({ apiKey }) : null;
   }
 
