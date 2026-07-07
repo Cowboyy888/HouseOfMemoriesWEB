@@ -15,6 +15,8 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="postgresql://build:build@localhost:5432/build" npm run prisma:generate --workspace=@drivehub/database
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
