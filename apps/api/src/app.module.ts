@@ -10,8 +10,10 @@ import { PaymentsModule } from "./modules/payments/payments.module";
 import { BookingsModule } from "./modules/bookings/bookings.module";
 import { InvoicesModule } from "./modules/invoices/invoices.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
+import { HealthController } from "./health.controller";
 
 @Module({
+  controllers: [HealthController],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     EventEmitterModule.forRoot(),
