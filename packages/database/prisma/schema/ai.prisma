@@ -1,0 +1,49 @@
+// ============================================================
+// AI SERVICES (Sprint 7)
+// ============================================================
+
+enum AiProvider {
+  OPENAI
+  ANTHROPIC
+}
+
+enum AiModuleName {
+  CUSTOMER_ASSISTANT
+  RECOMMENDATION
+  DYNAMIC_PRICING
+  PREDICTIVE_MAINTENANCE
+  BUSINESS_INTELLIGENCE
+  DOCUMENT_OCR
+  FRAUD_DETECTION
+  SENTIMENT_ANALYSIS
+  REPORTING
+}
+
+// Audit log for every AI provider call across every module below — the
+// concrete implementation of Sprint 7's "log AI requests" security
+// requirement, built once here so each module reuses it instead of
+// rolling its own. Prompt/response are truncated summaries, not a
+// verbatim transcript store — enough to debug and audit without turning
+// this table into its own unbounded PII liability.
+model AiRequestLog {
+  id              String           @id @default(uuid())
+  module          AiModuleName
+  // Nullable: not every AI module calls an external LLM provider — the
+  // Smart Vehicle Recommendation engine (and likely Dynamic Pricing,
+  // Predictive Maintenance) are deterministic, explainable scoring logic,
+  // not model calls. Null here means "no external provider used."
+  provider        AiProvider?
+  customerId      String?
+  customer        CustomerProfile? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  promptSummary   String
+  responseSummary String?
+  succeeded       Boolean
+  escalated       Boolean          @default(false)
+  errorMessage    String?
+  latencyMs       Int?
+  createdAt       DateTime         @default(now())
+
+  @@index([module, createdAt])
+  @@index([customerId, createdAt])
+  @@map("ai_request_logs")
+}

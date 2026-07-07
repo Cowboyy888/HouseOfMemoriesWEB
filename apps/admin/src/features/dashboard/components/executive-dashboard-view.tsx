@@ -15,6 +15,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useExecutiveSummaryQuery } from "@/features/dashboard/hooks";
 import { ApiError } from "@/lib/api-client";
+import { AiStatusCard } from "./ai-status-card";
 import { CarsByStatusChart } from "./cars-by-status-chart";
 import { KpiCard } from "./kpi-card";
 import { RevenueTrendChart } from "./revenue-trend-chart";
@@ -114,7 +115,10 @@ export function ExecutiveDashboardView() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <RevenueTrendChart data={data.revenueTrend} />
-        <CarsByStatusChart data={data.carsByStatus} />
+        <div className="space-y-4">
+          <AiStatusCard />
+          <CarsByStatusChart data={data.carsByStatus} />
+        </div>
       </div>
     </div>
   );

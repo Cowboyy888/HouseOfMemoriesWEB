@@ -29,6 +29,7 @@ model CustomerProfile {
   reviews             Review[]
   loyaltyTransactions LoyaltyTransaction[]
   notifications       Notification[]
+  aiRequestLogs       AiRequestLog[]
 
   @@index([preferredLocationId])
   @@map("customer_profiles")

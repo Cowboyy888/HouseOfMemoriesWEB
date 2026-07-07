@@ -117,3 +117,9 @@ Every cross-cutting decision made during discovery is recorded here so later age
 - **Decision:** `CreateBookingUseCase`/`CheckAvailabilityUseCase` now resolve the effective daily rate from active `PricingRule` rows (BASE override, SEASONAL/PROMOTIONAL/LONG_TERM_DISCOUNT multipliers compounding, WEEKEND multiplier blended across only Friday/Saturday nights) instead of a flat `car.dailyRentalRate`. Deposit remains a flat 20% constant.
 - **Rationale:** `PricingRule` has been fully modeled since Sprint 2 and unused — wiring it up is completing existing, already-designed schema surface. A `DepositPolicy` model (or equivalent field) does not exist anywhere in the schema; formalizing deposit policy would mean *introducing* new schema surface the original design didn't call for, which is a materially different (and out-of-scope-for-this-module) kind of change than activating an existing table.
 - **Status:** Accepted. See `04 Backend/Booking-Rules.md`.
+
+## ADR-019 — AI Provider Abstraction: Same Strategy Pattern as Payments, Config-Selected Not Customer-Selected
+- **Date:** 2026-07-07
+- **Decision:** `AiProviderPort` (OpenAI, Anthropic) follows the exact Repository/Strategy pattern established for `PaymentProviderPort` (ADR-004/013), but the concrete provider is chosen once via an `AI_PROVIDER` env var, not per-request like a customer picking a payment method — nothing about which LLM answers a chat message is the customer's decision.
+- **Rationale:** Sprint 7's brief explicitly asks to "allow switching AI providers through configuration." Reusing an already-proven pattern (rather than inventing a new one for AI) keeps the codebase's abstraction style consistent. Verified live that the switch is real, not just structurally present: the same failing request reported a different unconfigured-provider error message when `AI_PROVIDER` was toggled.
+- **Status:** Accepted. See `07 AI/Customer-Assistant.md`.

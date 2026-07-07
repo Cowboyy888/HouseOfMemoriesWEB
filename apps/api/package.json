@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "@drivehub/contracts": "*",
     "@drivehub/database": "*",
     "@nestjs/common": "^11.1.0",
@@ -22,6 +23,7 @@
     "better-auth": "^1.6.23",
     "dotenv": "^17.4.2",
     "express": "^5.1.0",
+    "openai": "^6.45.0",
     "reflect-metadata": "^0.2.2",
     "resend": "^6.17.1",
     "rxjs": "^7.8.1",
