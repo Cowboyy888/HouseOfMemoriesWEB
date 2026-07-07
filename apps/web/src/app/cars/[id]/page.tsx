@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { BookingWidget } from "@/features/bookings/components/booking-widget";
 import { fetchCarById } from "@/features/cars/api";
 import { CarGallery } from "@/features/cars/components/car-gallery";
 import { formatCurrency } from "@/lib/format";
@@ -139,10 +140,15 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
             {salePrice && <p className="text-muted-foreground">{salePrice} to buy</p>}
           </div>
 
-          <p className="mt-4 text-sm text-muted-foreground">
-            Booking and purchase checkout are coming in the next feature sprint — this page currently shows
-            live catalog data only.
-          </p>
+          {(car.listingType === "RENTAL" || car.listingType === "BOTH") && car.currentLocation && (
+            <div className="mt-6 border-t pt-6">
+              <BookingWidget carId={car.id} locationId={car.currentLocation.id} />
+            </div>
+          )}
+
+          {car.listingType === "SALE" && (
+            <p className="mt-4 text-sm text-muted-foreground">Purchase checkout is coming in a later feature sprint.</p>
+          )}
         </aside>
       </div>
     </main>

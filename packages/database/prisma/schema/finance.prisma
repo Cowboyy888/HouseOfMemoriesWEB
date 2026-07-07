@@ -6,11 +6,14 @@ enum PaymentMethod {
   CARD
   BANK_TRANSFER
   CASH
+  QR_CODE
 }
 
 enum PaymentProvider {
   STRIPE
   MANUAL
+  ABA_PAYWAY
+  KHQR
 }
 
 enum PaymentStatus {
@@ -32,6 +35,10 @@ model Payment {
   method            PaymentMethod
   provider          PaymentProvider @default(STRIPE)
   providerPaymentId String?         @unique
+  // Provider-specific extras that don't warrant their own columns (Stripe
+  // client secret, ABA PayWay checkout URL, KHQR qr string/deeplink) —
+  // deliberately generic rather than one column per provider.
+  providerMetadata  Json?
   status            PaymentStatus   @default(PENDING)
 
   bookingId         String?
@@ -151,4 +158,21 @@ model RevenueLedgerEntry {
   @@index([sourceType, occurredAt])
   @@index([locationId, occurredAt])
   @@map("revenue_ledger_entries")
+}
+
+// Client-supplied idempotency keys for payment-creating requests — a retried
+// request (network timeout, double-click) with the same key replays the
+// stored response instead of creating a second payment. requestHash guards
+// against a key being reused for a genuinely different request body.
+model IdempotencyKey {
+  id           String   @id @default(uuid())
+  key          String   @unique
+  requestHash  String
+  statusCode   Int?
+  responseBody Json?
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  @@index([expiresAt])
+  @@map("idempotency_keys")
 }

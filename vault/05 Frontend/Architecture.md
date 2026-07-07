@@ -49,6 +49,6 @@ Both `/cars` and `/cars/[id]` are **Server Components that fetch on the server f
 - Live dev server (`next dev --turbopack`) serves `/`, `/cars`, and `/cars/[id]` against the real running NestJS API — all `200`, with real seeded data, real 404 for an unknown id.
 
 ## Known gaps (explicitly out of scope this sprint)
-- No Booking/Buy call-to-action on the detail page yet — intentionally omitted rather than wired to a dead endpoint; the aside note on that page says so explicitly. That's the next vertical slice.
+- ~~No Booking/Buy call-to-action on the detail page yet~~ — done in Sprint 6 Module 8, see `05 Frontend/Booking-Payments-UI.md` (rental booking; sale/purchase checkout is still a later phase).
 - No auth/session UI yet (Better Auth integration comes with the Auth feature, not this one).
 - Cloudflare Images/R2 domain isn't configured in `next.config.ts` yet — no real image URLs exist to test against until the fleet has real photos.

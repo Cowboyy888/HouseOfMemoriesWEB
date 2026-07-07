@@ -3,7 +3,7 @@
 Enterprise Car Rental & Car Sales platform. Built with Harness Engineering: every decision is documented in the Obsidian vault at [`/vault`](./vault) before code is written.
 
 ## Status
-Sprint 5 — Admin Dashboard shell + Executive Dashboard module (RBAC-gated, real KPIs/charts from live Postgres data) shipped on a new `apps/admin` workspace, alongside the customer site's Car Browsing and Auth slices from Sprint 4. Real Postgres database, real NestJS API, real Next.js pages — verified live, not just written. See [`/vault/04 Backend`](./vault/04%20Backend), [`/vault/05 Frontend`](./vault/05%20Frontend), [`/vault/06 Dashboard`](./vault/06%20Dashboard), and [`/vault/08 Deployment/Local-Development.md`](./vault/08%20Deployment/Local-Development.md).
+**Live in production:** customer site + API, at https://web-ochre-five-54.vercel.app (Vercel) backed by https://api-production-58ef.up.railway.app (Railway) and a Neon Postgres database. `apps/admin` is built (Sprint 5 — RBAC-gated Executive Dashboard) but not yet deployed. See [`/vault/08 Deployment/Production.md`](./vault/08%20Deployment/Production.md) for the full deployment writeup, [`/vault/04 Backend`](./vault/04%20Backend), [`/vault/05 Frontend`](./vault/05%20Frontend), [`/vault/06 Dashboard`](./vault/06%20Dashboard), and [`/vault/08 Deployment/Local-Development.md`](./vault/08%20Deployment/Local-Development.md) for local dev.
 
 ## Quick Start
 ```bash
@@ -21,7 +21,7 @@ See [`/vault/08 Deployment/Local-Development.md`](./vault/08%20Deployment/Local-
 - **Auth:** Better Auth — email/password working end-to-end; Google/Facebook configured in code, inert until real OAuth credentials are supplied
 - **RBAC:** 11 roles, permission-guarded API routes (`@RequirePermissions`), enforced server-side only
 - **Storage:** Cloudflare R2, Cloudflare Images (not yet wired up)
-- **Deployment:** Cloudflare Pages, Docker, GitHub Actions (not yet configured)
+- **Deployment:** Vercel (`apps/web`), Railway via Docker (`apps/api`), Neon (Postgres) — see `vault/08 Deployment/Production.md` for why this differs from the originally-planned Cloudflare Pages/Containers. No CI/CD yet (deploys are manual)
 - **Testing:** Vitest, Playwright (not yet configured)
 - **Monorepo:** Turborepo + npm workspaces
 

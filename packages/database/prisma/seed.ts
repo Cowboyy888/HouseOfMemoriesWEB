@@ -28,6 +28,12 @@ async function main() {
     ["car", "manage"],
     ["employee", "manage"],
     ["report", "view"],
+    ["payment", "create"],
+    ["payment", "read"],
+    ["payment", "refund"],
+    ["payment", "update"],
+    ["invoice", "read"],
+    ["notification", "read"],
   ];
 
   const permissions = await Promise.all(
@@ -48,6 +54,29 @@ async function main() {
         create: { roleId: adminRole.id, permissionId: permission.id },
       }),
     ),
+  );
+
+  // Customers create/read/cancel their own bookings and payments (ownership
+  // enforced at the use-case level, not by these permissions alone).
+  const customerPermissionNames = [
+    "payment:create",
+    "payment:read",
+    "booking:create",
+    "booking:read",
+    "booking:cancel",
+    "invoice:read",
+    "notification:read",
+  ];
+  await Promise.all(
+    permissions
+      .filter((permission) => customerPermissionNames.includes(`${permission.resource}:${permission.action}`))
+      .map((permission) =>
+        prisma.rolePermission.upsert({
+          where: { roleId_permissionId: { roleId: customerRole.id, permissionId: permission.id } },
+          update: {},
+          create: { roleId: customerRole.id, permissionId: permission.id },
+        }),
+      ),
   );
 
   // ---- Admin Dashboard personas (Sprint 5) ----
@@ -93,6 +122,63 @@ async function main() {
         },
         update: {},
         create: { roleId: dashboardRoles[roleName].id, permissionId: reportViewPermission.id },
+      }),
+    ),
+  );
+
+  // Staff who confirm bookings (e.g. after verifying a deposit transfer) —
+  // booking:update is the "staff operational" half of the booking
+  // permission set; booking:create/read/cancel above are customer-only.
+  const bookingUpdatePermission = permissions.find((p) => p.resource === "booking" && p.action === "update");
+  if (!bookingUpdatePermission) {
+    throw new Error("booking:update permission was not created above");
+  }
+  const rolesWithBookingUpdateAccess = ["SUPER_ADMIN", "COMPANY_OWNER", "BRANCH_MANAGER", "CUSTOMER_SUPPORT"] as const;
+  await Promise.all(
+    rolesWithBookingUpdateAccess.map((roleName) =>
+      prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: { roleId: dashboardRoles[roleName].id, permissionId: bookingUpdatePermission.id },
+        },
+        update: {},
+        create: { roleId: dashboardRoles[roleName].id, permissionId: bookingUpdatePermission.id },
+      }),
+    ),
+  );
+
+  // Staff who confirm Manual Bank Transfer payments were actually received
+  // (checking the real bank statement) — same operational-staff role list
+  // as booking:update, since these two actions typically go together.
+  const paymentUpdatePermission = permissions.find((p) => p.resource === "payment" && p.action === "update");
+  if (!paymentUpdatePermission) {
+    throw new Error("payment:update permission was not created above");
+  }
+  await Promise.all(
+    rolesWithBookingUpdateAccess.map((roleName) =>
+      prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: { roleId: dashboardRoles[roleName].id, permissionId: paymentUpdatePermission.id },
+        },
+        update: {},
+        create: { roleId: dashboardRoles[roleName].id, permissionId: paymentUpdatePermission.id },
+      }),
+    ),
+  );
+
+  // Staff who process refunds — finance-adjacent roles only, never CUSTOMER.
+  const paymentRefundPermission = permissions.find((p) => p.resource === "payment" && p.action === "refund");
+  if (!paymentRefundPermission) {
+    throw new Error("payment:refund permission was not created above");
+  }
+  const rolesWithRefundAccess = ["SUPER_ADMIN", "COMPANY_OWNER", "FINANCE_MANAGER"] as const;
+  await Promise.all(
+    rolesWithRefundAccess.map((roleName) =>
+      prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: { roleId: dashboardRoles[roleName].id, permissionId: paymentRefundPermission.id },
+        },
+        update: {},
+        create: { roleId: dashboardRoles[roleName].id, permissionId: paymentRefundPermission.id },
       }),
     ),
   );

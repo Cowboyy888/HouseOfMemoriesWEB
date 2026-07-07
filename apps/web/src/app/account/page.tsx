@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { MyBookingsList } from "@/features/bookings/components/my-bookings-list";
+import { MyInvoicesList } from "@/features/invoices/components/my-invoices-list";
 import { useSession } from "@/lib/auth-client";
 
 export default function AccountPage() {
@@ -39,9 +41,20 @@ export default function AccountPage() {
           <dd className="font-medium">{new Date(session.user.createdAt).toLocaleDateString()}</dd>
         </div>
       </dl>
-      <p className="mt-6 text-sm text-muted-foreground">
-        Booking history and rental tracking will show up here once the Booking feature is built.
-      </p>
+
+      <section className="mt-10">
+        <h2 className="text-lg font-semibold">My Bookings</h2>
+        <div className="mt-3">
+          <MyBookingsList />
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-lg font-semibold">My Invoices</h2>
+        <div className="mt-3">
+          <MyInvoicesList />
+        </div>
+      </section>
     </main>
   );
 }

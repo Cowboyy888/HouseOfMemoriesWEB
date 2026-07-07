@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { authClient, useSession } from "@/lib/auth-client";
 
 export function SiteHeader() {
@@ -27,6 +28,7 @@ export function SiteHeader() {
           </Link>
           {isPending ? null : session ? (
             <>
+              <NotificationBell />
               <Link href="/account" className="text-sm font-medium text-muted-foreground hover:text-foreground">
                 {session.user.name}
               </Link>

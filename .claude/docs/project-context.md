@@ -28,17 +28,35 @@ npx turbo run build typecheck lint   # the actual full-workspace gate used throu
 ```
 Per-package: `npm run <script> --workspace=@drivehub/<name>` (package names: `@drivehub/web`, `@drivehub/admin`, `@drivehub/api`, `@drivehub/database`, `@drivehub/contracts`).
 
-## Tests — genuinely absent
-`apps/api/package.json` has `"test": "vitest run"` but **zero test files exist anywhere in this repo**. `apps/web`/`apps/admin` have no test script at all. Don't assume `npm run test` is a meaningful gate yet — if a task calls for adding tests, that's real, valuable work; if it doesn't, don't block on a test command that has nothing to run.
+## Tests (Sprint 6 Module 6 — first real coverage)
+`apps/api` now has real Vitest unit tests (`vitest.config.ts`, `src/**/*.spec.ts`) covering the highest-risk business logic in Payments/Bookings (idempotency, refund math, overlap/deposit calculation, event emission, ABA signature verification) — see `vault/09 Testing/Testing-Strategy.md` for what's covered and why, and the approach (fake port implementations, no test DB, per the Repository Pattern this repo already uses everywhere). `apps/api/tsconfig.build.json` was added alongside this — `nest build` was compiling `.spec.ts` files straight into `dist/` with nothing to exclude them. `apps/web`/`apps/admin` still have no test script. `npx turbo run build typecheck test` is now a meaningful full-workspace gate.
 
-## Deploy — not configured
-No Dockerfile, no `.github/`, no wrangler config exist despite Cloudflare Pages/Docker/GitHub Actions being named as the intended stack in the README. **Do not invent a deploy command.** Deploying is a human-only action regardless (see `workflow.md` hard stops).
+## Deploy — live, but manual (no CI/CD)
+Customer site + API are live in production: `apps/web` on Vercel, `apps/api` on Railway (via `apps/api/Dockerfile`, added for this), Postgres on Neon. `apps/admin` is not deployed. Deploys were run manually (`railway up`, `vercel --prod`) — pushing to `main` does **not** auto-deploy either service; there's still no `.github/` workflow. Full writeup, live URLs, and env var map: `vault/08 Deployment/Production.md`. **Deploying (running these commands, changing production config) remains a human-only action regardless of automation** — see `workflow.md` hard stops. This section existing doesn't mean an agent should redeploy; it means "don't invent a deploy command," the actual one is now documented.
 
 ## Database
 Local dev Postgres (Homebrew, not Docker — none available in the original dev environment), database name `drivehub_dev`. Migrations: `packages/database/prisma/migrations/`. Schema changes are additive-first (see `vault/03 Database/Migration-Strategy.md`) — safe for a coder to run `prisma migrate dev` for local/dev-only additive changes; a **production** schema change is a human-only hard stop.
+
+## Payments (Sprint 6 Modules 1 & 3)
+`apps/api/src/modules/payments/` — Stripe, ABA PayWay, KHQR, and Manual Bank Transfer behind one `PaymentProviderPort` interface (Module 1), plus deposit/installment amount enforcement, auto-confirm-booking-on-payment-success, and refunds (Module 3). Full writeup, including a real bug Module 3's own live testing found and fixed (Manual payments could never leave PENDING, so duplicate deposits weren't blocked) and which providers are live-testable without real credentials: `vault/04 Backend/Payments.md`.
+
+## Bookings (Sprint 6 Module 2 — booking workflow)
+`apps/api/src/modules/bookings/` — create/cancel/confirm + availability checks. Applied the Sprint-2-deferred raw-SQL migration (GiST exclusion constraint preventing overlapping bookings for the same car, plus three CHECK constraints) — see ADR-014 and `vault/04 Backend/Bookings.md`. `CustomerProfileResolver` now lives in `apps/api/src/shared/customer/` (promoted out of Payments once Bookings needed the same lookup). Pickup/return/operational transitions and pricing rules are later work.
+
+## Invoices (Sprint 6 Module 4)
+`apps/api/src/modules/invoices/` — one `Invoice` generated per successful payment (a receipt, not a pre-payment bill — see ADR-016). Full writeup: `vault/04 Backend/Invoices.md`.
+
+## Frontend for Bookings/Payments/Invoices/Notifications (Sprint 6 Module 8)
+`apps/web` now has real UI for all of Sprint 6's backend work: a booking widget with a live rule-adjusted price preview on the car detail page, a payment method selector (Manual Bank Transfer + KHQR only — Stripe/ABA are inert without credentials so aren't offered), a real scannable QR code render for KHQR (`qrcode.react`), My Bookings/My Invoices on the account page, and a notifications bell in the header. New `lib/api-client.ts` for authenticated (credentials-included, uncached) requests, distinct from `features/cars/api.ts`'s public cached fetches. No browser automation tool was available to click through this interactively — verified instead via a real `next build` (which caught a genuine `useSearchParams`-needs-Suspense build failure) and by replaying every component's exact network call cross-origin against the live API. See `vault/05 Frontend/Booking-Payments-UI.md`.
+
+## Booking Rules (Sprint 6 Module 7)
+`CreateBookingUseCase`/`CheckAvailabilityUseCase` now resolve the daily rate via `PricingRule` (BASE override, SEASONAL/PROMOTIONAL/LONG_TERM_DISCOUNT multipliers, WEEKEND blended per Friday/Saturday night) instead of a flat `car.dailyRentalRate` — the model existed since Sprint 2 and was unused until now. Deposit is still a flat 20% (formalizing it needs a schema field/model that doesn't exist — see ADR-018). See `vault/04 Backend/Booking-Rules.md`.
+
+## Notifications (Sprint 6 Module 5) — and a module-graph refactor
+`apps/api/src/modules/notifications/` — in-app notification log (the "notification center" `06 Dashboard/Architecture.md` deferred for lack of an event source) plus best-effort email via Resend (inert without `RESEND_API_KEY`). Becoming the third consumer of "something happened on payment success" triggered the refactor ADR-015/016 both flagged in advance: `PaymentsModule` no longer imports `BookingsModule`/`InvoicesModule` at all (`payments.module.ts`'s `imports` array is empty) — `HandlePaymentSuccessUseCase` emits `PaymentSucceededEvent` via `@nestjs/event-emitter` instead, and Bookings/Invoices/Notifications each listen independently. See ADR-017 and `vault/04 Backend/Notifications.md`.
 
 ## Existing documentation system (this project's closest thing to an issue tracker)
 `/vault` — an Obsidian knowledge base, not a task tracker. `vault/01 Vision/Decisions.md` is a running ADR log (append new decisions, never delete old ones). Per-module docs (e.g. `vault/06 Dashboard/Executive-Dashboard.md`) end with "Known issues" and "Next Module" sections — read the relevant one before starting related work, and update it when you finish, same as every prior sprint in this repo did.
 
 ## Git state
-Repo initialized, **zero commits exist yet** on `main`. No PR template, no enforced commit convention, no hooks, no branches yet. This harness uses a **branch-per-task** model (see `workflow.md`) so a reviewer has something concrete to diff even with no PR process set up: the coder commits its own work locally to a task-scoped branch, never to `main` directly, and never pushes anywhere. Merging to `main` and pushing are human actions.
+Pushed to `github.com/Cowboyy888/HouseOfMemoriesWEB`, branch `main`. No PR template, no enforced commit convention, no hooks. This harness uses a **branch-per-task** model (see `workflow.md`) so a reviewer has something concrete to diff even with no PR process set up: the coder commits its own work locally to a task-scoped branch, never to `main` directly, and never pushes anywhere. Merging to `main` and pushing are human actions.

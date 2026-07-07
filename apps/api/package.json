@@ -16,12 +16,16 @@
     "@nestjs/common": "^11.1.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.1.0",
+    "@nestjs/event-emitter": "^3.1.0",
     "@nestjs/platform-express": "^11.1.0",
+    "bakong-khqr": "^1.0.20",
     "better-auth": "^1.6.23",
     "dotenv": "^17.4.2",
     "express": "^5.1.0",
     "reflect-metadata": "^0.2.2",
+    "resend": "^6.17.1",
     "rxjs": "^7.8.1",
+    "stripe": "^22.3.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {

@@ -28,6 +28,7 @@ model CustomerProfile {
   invoices            Invoice[]
   reviews             Review[]
   loyaltyTransactions LoyaltyTransaction[]
+  notifications       Notification[]
 
   @@index([preferredLocationId])
   @@map("customer_profiles")
@@ -113,4 +114,32 @@ model LoyaltyTransaction {
 
   @@index([customerId, createdAt])
   @@map("loyalty_transactions")
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  PAYMENT_SUCCEEDED
+  INVOICE_ISSUED
+}
+
+// In-app notification log — the "notification center" 06 Dashboard/
+// Architecture.md deferred in Sprint 5 for lack of an event source. Real
+// event sources exist now (Bookings/Payments/Invoices), delivered via the
+// PAYMENT_SUCCEEDED/BOOKING_CONFIRMED/BOOKING_CANCELLED domain events.
+model Notification {
+  id               String           @id @default(uuid())
+  customerId       String
+  customer         CustomerProfile  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type             NotificationType
+  title            String
+  body             String
+  readAt           DateTime?
+  relatedBookingId String?
+  relatedPaymentId String?
+  relatedInvoiceId String?
+  createdAt        DateTime         @default(now())
+
+  @@index([customerId, readAt])
+  @@map("notifications")
 }

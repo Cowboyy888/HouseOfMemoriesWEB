@@ -24,6 +24,10 @@ async function bootstrap() {
   });
 
   app.use("/api/auth", toNodeHandler(auth));
+  // Stripe webhook signatures are computed over the exact raw bytes Stripe
+  // sent — parsing and re-serializing as JSON first would break verification,
+  // so this one route gets the raw body before the global JSON parser runs.
+  app.use("/api/payments/webhooks/stripe", express.raw({ type: "application/json" }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 

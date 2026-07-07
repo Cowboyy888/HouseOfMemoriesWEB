@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { SignInForm } from "@/features/auth/components/sign-in-form";
 
 export const metadata: Metadata = {
@@ -13,7 +14,9 @@ export default function SignInPage() {
       <h1 className="text-2xl font-bold tracking-tight">Sign in</h1>
       <p className="mt-1 text-muted-foreground">Welcome back to DriveHub.</p>
       <div className="mt-6">
-        <SignInForm />
+        <Suspense fallback={null}>
+          <SignInForm />
+        </Suspense>
       </div>
       <p className="mt-6 text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}

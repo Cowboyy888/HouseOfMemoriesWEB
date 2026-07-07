@@ -6,17 +6,9 @@ import {
   type CarListResponse,
 } from "@drivehub/contracts";
 import { env } from "@/lib/env";
+import { ApiError } from "@/lib/api-client";
 
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number,
-    public readonly details?: unknown,
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
-}
+export { ApiError };
 
 function buildQueryString(query: Partial<CarListQuery>): string {
   const params = new URLSearchParams();

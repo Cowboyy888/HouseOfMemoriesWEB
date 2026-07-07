@@ -36,6 +36,13 @@ model Booking {
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 
+  // Generated column + GiST exclusion constraint (raw-SQL migration
+  // `raw_sql_constraints`) that blocks two active bookings for the same
+  // car from overlapping — Prisma can't express either, so this is declared
+  // `Unsupported` purely so `prisma migrate dev` knows the column exists
+  // and never tries to drop it to "fix" drift against this schema file.
+  dateRange Unsupported("daterange")? @map("date_range")
+
   extensions           BookingExtension[]
   returnReport         ReturnReport?
   damageReports        DamageReport[]
