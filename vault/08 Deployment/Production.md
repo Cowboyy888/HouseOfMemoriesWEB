@@ -43,7 +43,7 @@ Chosen instead, per your explicit picks:
 
 ## Known gaps
 - No custom domain — both services are on their platform-provided subdomains.
-- No CI/CD — deploys were run manually via `railway up` / `vercel --prod` from local. GitHub Actions (named in the original stack) isn't wired up; pushing to `main` does **not** auto-deploy either service yet.
+- No CD — deploys are still run manually via `railway up` / `vercel --prod` from local; pushing to `main` does **not** auto-deploy either service. CI now exists (`.github/workflows/ci.yml`: lint/typecheck/test on push/PR to `main`), and `.github/workflows/deploy.yml` runs `npm run build` on push to `main` but its actual deploy step is still a placeholder (`echo "Deployment hook goes here"`) — deploying remains a human-only action regardless (see `workflow.md` hard stops).
 - `apps/admin` is not deployed anywhere.
 - No error/log monitoring (Sentry, drains, etc.) configured on either platform.
 - Seed data on production is demo/placeholder-obvious data, not real inventory.
