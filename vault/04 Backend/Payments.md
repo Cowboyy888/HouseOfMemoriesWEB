@@ -179,3 +179,5 @@ Full workspace gate (`npx turbo run build typecheck`) passes with these changes.
 - Bakong transaction-status endpoint is unverified against an authoritative NBC source (see KHQR section above).
 - ABA PayWay's exact field contract is inferred from public docs, not a verified SDK — same caveat as above.
 - Invoices and notifications are still later Sprint 6 modules.
+
+**Sprint 9 fix:** Stripe (`createPayment`/`verifyPayment`/`refundPayment`) and KHQR (`verifyPayment`'s `fetch()` call) had no try/catch around the actual network call — a `StripeConnectionError`/`StripeAPIError` or a DNS/timeout failure propagated uncaught instead of the clean `503` the "not configured" case already returns. Both now translate live network/API failures into `ServiceUnavailableException`, landing in the same idempotency-failure-recording path as any other error (see ADR-020). Card declines / invalid-request errors are deliberately left untranslated — those are real outcomes, not provider unavailability.
