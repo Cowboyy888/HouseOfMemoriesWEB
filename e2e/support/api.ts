@@ -94,6 +94,11 @@ export async function getBooking(request: APIRequestContext, id: string): Promis
   return BookingResultSchema.parse(await okJson(res, "get booking"));
 }
 
+export async function cancelBooking(request: APIRequestContext, id: string, reason: string): Promise<BookingResult> {
+  const res = await request.post(`${API_URL}/bookings/${id}/cancel`, { data: { reason } });
+  return BookingResultSchema.parse(await okJson(res, "cancel booking"));
+}
+
 export async function getMyInvoices(request: APIRequestContext): Promise<InvoiceListResult> {
   const res = await request.get(`${API_URL}/invoices/mine`);
   return InvoiceListResultSchema.parse(await okJson(res, "list my invoices"));

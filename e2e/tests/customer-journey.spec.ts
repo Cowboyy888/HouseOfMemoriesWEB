@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { confirmManualPayment, signIn } from "../support/api";
+import { cancelBooking, confirmManualPayment, signIn } from "../support/api";
 import {
   SUPER_ADMIN_EMAIL,
   SUPER_ADMIN_PASSWORD,
@@ -16,6 +16,19 @@ import { WEB_URL } from "../support/urls";
 const BOOKING_WINDOW = futureBookingWindow(365, 200);
 
 test.describe("Customer journey", () => {
+  // The booking this test creates is cancelled in afterEach (via the
+  // customer's own still-authenticated browser session, page.request) so
+  // BOOKING_WINDOW's fixed date range doesn't fill up with CONFIRMED
+  // bookings across repeat runs — see Testing-Strategy.md.
+  let bookingId = "";
+
+  test.afterEach(async ({ page }) => {
+    if (!bookingId) {
+      return;
+    }
+    await cancelBooking(page.request, bookingId, "e2e-teardown: customer-journey.spec.ts");
+  });
+
   test("register, log in, find the seeded Camry, book it, pay by bank transfer, and see the invoice once staff confirm", async ({
     page,
     request,
@@ -76,6 +89,9 @@ test.describe("Customer journey", () => {
 
       await page.getByRole("button", { name: "Book Now" }).click();
       await expect(page).toHaveURL(new RegExp(`${WEB_URL}/account/bookings/`));
+
+      bookingId = new URL(page.url()).pathname.split("/").pop() ?? "";
+      expect(bookingId).not.toBe("");
 
       const bookingHeading = page.getByRole("heading", { name: /^BK-/ });
       await expect(bookingHeading).toBeVisible();

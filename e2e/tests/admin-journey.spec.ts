@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+  cancelBooking,
   createBooking,
   createManualBankTransferPayment,
   fetchSeededCamry,
@@ -14,9 +15,21 @@ import { ADMIN_URL, API_URL } from "../support/urls";
 const BOOKING_WINDOW = futureBookingWindow(700, 200);
 
 test.describe("Admin journey", () => {
+  // The fixture booking this test creates is cancelled in afterEach (via the
+  // same `request` context the fixture customer signed up with) so
+  // BOOKING_WINDOW's fixed date range doesn't fill up with CONFIRMED
+  // bookings across repeat runs — see Testing-Strategy.md.
+  let bookingId = "";
+
+  test.afterEach(async ({ request }) => {
+    if (!bookingId) {
+      return;
+    }
+    await cancelBooking(request, bookingId, "e2e-teardown: admin-journey.spec.ts");
+  });
+
   test("staff logs in, confirms a pending manual payment, and views the executive dashboard", async ({ page, request }) => {
     let paymentId = "";
-    let bookingId = "";
 
     await test.step("Fixture setup — a throwaway customer books the Camry and starts a Manual Bank Transfer (not the thing under test; the admin journey starts at Login below)", async () => {
       await signUp(request, { name: "E2E Fixture Customer", email: uniqueEmail("e2e-admin-fixture"), password: TEST_PASSWORD });
