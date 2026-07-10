@@ -1,5 +1,13 @@
 import { Body, Controller, Get, Inject, Post, Query, UseGuards } from "@nestjs/common";
-import { ChatRequestSchema, RecommendationQuerySchema, type ChatRequest, type RecommendationQuery } from "@drivehub/contracts";
+import { Throttle } from "@nestjs/throttler";
+import {
+  AiRequestLogQuerySchema,
+  ChatRequestSchema,
+  RecommendationQuerySchema,
+  type AiRequestLogQuery,
+  type ChatRequest,
+  type RecommendationQuery,
+} from "@drivehub/contracts";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { PermissionsGuard } from "../../shared/auth/permissions.guard";
 import { RequirePermissions } from "../../shared/auth/require-permissions.decorator";
@@ -23,6 +31,9 @@ export class AiController {
   // Public — an anonymous visitor can ask about the catalog/policies just
   // like they can browse cars without signing in; only booking-specific
   // answers require a session, checked internally, not by a route guard.
+  // Stricter than the global default: unauthenticated + billed per real LLM
+  // call, so an anonymous scripted burst could otherwise run up a real bill.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post("chat")
   async chat(@Body(new ZodValidationPipe(ChatRequestSchema)) body: ChatRequest, @CurrentUser() user: { id: string } | null) {
     const customerId = await this.resolveCustomerId(user);
@@ -32,8 +43,8 @@ export class AiController {
   @UseGuards(PermissionsGuard)
   @RequirePermissions("report:view")
   @Get("logs")
-  async logs(@Query("limit") limit = "5") {
-    return this.listAiRequestLogsUseCase.execute(Number(limit));
+  async logs(@Query(new ZodValidationPipe(AiRequestLogQuerySchema)) query: AiRequestLogQuery) {
+    return this.listAiRequestLogsUseCase.execute(query.limit);
   }
 
   // Cheap "is a provider configured" signal for the admin dashboard status
@@ -49,6 +60,9 @@ export class AiController {
 
   // Public for the same reason — recommendations are useful before signing
   // in; booking-history affinity only kicks in for a resolved session.
+  // Not LLM-billed (deterministic scoring), but still unauthenticated and
+  // public, so it gets a stricter-than-default limit too.
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @Get("recommendations")
   async recommendations(
     @Query(new ZodValidationPipe(RecommendationQuerySchema)) query: RecommendationQuery,

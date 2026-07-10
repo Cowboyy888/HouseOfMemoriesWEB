@@ -6,4 +6,5 @@ export * from "./invoices/invoice.schema";
 export * from "./notifications/notification.schema";
 export * from "./ai/chat.schema";
 export * from "./ai/recommendation.schema";
+export * from "./ai/request-log-query.schema";
 export * from "./ai/status.schema";

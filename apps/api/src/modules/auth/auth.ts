@@ -1,9 +1,14 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { createPrismaClient } from "@drivehub/database";
+import { ResendEmailSender } from "../notifications/infrastructure/resend-email-sender";
 import { getAllowedOrigins } from "../../shared/config/allowed-origins";
 
 const prisma = createPrismaClient();
+// auth.ts is constructed at import time, outside Nest's DI container — the
+// no-arg constructor makes direct instantiation simpler than wiring a
+// provider through NotificationsModule just for this one callback.
+const emailSender = new ResendEmailSender();
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -44,6 +49,13 @@ export const auth = betterAuth({
   trustedOrigins: getAllowedOrigins(),
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({ user, url }) => {
+      await emailSender.send(
+        user.email,
+        "Reset your password",
+        `We received a request to reset your DriveHub password. Click the link below to choose a new one:\n\n${url}\n\nIf you didn't request this, you can safely ignore this email.`,
+      );
+    },
   },
   socialProviders: {
     ...(googleClientId && googleClientSecret

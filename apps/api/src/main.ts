@@ -4,6 +4,7 @@ import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { toNodeHandler } from "better-auth/node";
 import express from "express";
+import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { auth } from "./modules/auth/auth";
 import { getAllowedOrigins } from "./shared/config/allowed-origins";
@@ -17,6 +18,8 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
   });
+
+  app.use(helmet());
 
   app.enableCors({
     origin: getAllowedOrigins(),

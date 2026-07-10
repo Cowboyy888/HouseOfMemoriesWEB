@@ -80,11 +80,16 @@ export class KhqrPaymentProvider implements PaymentProviderPort {
       );
     }
 
-    const response = await fetch("https://api-bakong.nbc.gov.kh/v1/check_transaction_by_md5", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ md5 }),
-    });
+    let response: Response;
+    try {
+      response = await fetch("https://api-bakong.nbc.gov.kh/v1/check_transaction_by_md5", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ md5 }),
+      });
+    } catch {
+      throw new ServiceUnavailableException("Bakong transaction-status service is temporarily unreachable, please try again");
+    }
 
     if (!response.ok) {
       return { status: "PENDING" };

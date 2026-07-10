@@ -1,6 +1,8 @@
 import { type MiddlewareConsumer, Module, type NestModule } from "@nestjs/common";
+import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { EventEmitterModule } from "@nestjs/event-emitter";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { DatabaseModule } from "./shared/database/database.module";
 import { CustomerModule } from "./shared/customer/customer.module";
 import { SessionMiddleware } from "./shared/auth/session.middleware";
@@ -18,6 +20,10 @@ import { HealthController } from "./health.controller";
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     EventEmitterModule.forRoot(),
+    // Global default: 60 requests/minute per IP. Individual routes (e.g. the
+    // unauthenticated, LLM-billed AI endpoints) apply a stricter @Throttle
+    // override on top of this — see ai.controller.ts.
+    ThrottlerModule.forRoot([{ name: "default", ttl: 60_000, limit: 60 }]),
     DatabaseModule,
     CustomerModule,
     CarsModule,
@@ -28,6 +34,7 @@ import { HealthController } from "./health.controller";
     NotificationsModule,
     AiModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
