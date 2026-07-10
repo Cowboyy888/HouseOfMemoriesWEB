@@ -22,7 +22,7 @@ See [`/vault/08 Deployment/Local-Development.md`](./vault/08%20Deployment/Local-
 - **RBAC:** 11 roles, permission-guarded API routes (`@RequirePermissions`), enforced server-side only
 - **Storage:** Cloudflare R2, Cloudflare Images (not yet wired up)
 - **Deployment:** Vercel (`apps/web`), Railway via Docker (`apps/api`), Neon (Postgres) — see `vault/08 Deployment/Production.md` for why this differs from the originally-planned Cloudflare Pages/Containers. No CI/CD yet (deploys are manual)
-- **Testing:** Vitest, Playwright (not yet configured)
+- **Testing:** Vitest (`apps/api` unit tests), Playwright (`e2e/` — `npm run test:e2e`, see `/vault/09 Testing/Testing-Strategy.md`)
 - **Monorepo:** Turborepo + npm workspaces
 
 ## Repo Layout
@@ -33,6 +33,7 @@ See [`/vault/08 Deployment/Local-Development.md`](./vault/08%20Deployment/Local-
 /apps/api            — NestJS backend (serves both frontends)
 /apps/web            — Next.js customer-facing site
 /apps/admin          — Next.js staff admin dashboard (RBAC-gated)
+/e2e                 — Playwright E2E tests driving apps/api + apps/web + apps/admin together
 ```
 
 ## Knowledge Base
