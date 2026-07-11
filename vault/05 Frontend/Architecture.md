@@ -52,3 +52,6 @@ Both `/cars` and `/cars/[id]` are **Server Components that fetch on the server f
 - ~~No Booking/Buy call-to-action on the detail page yet~~ — done in Sprint 6 Module 8, see `05 Frontend/Booking-Payments-UI.md` (rental booking; sale/purchase checkout is still a later phase).
 - No auth/session UI yet (Better Auth integration comes with the Auth feature, not this one).
 - Cloudflare Images/R2 domain isn't configured in `next.config.ts` yet — no real image URLs exist to test against until the fleet has real photos.
+
+## Pre-launch checklist item (Sprint 9 Phase 4 performance audit)
+Neither `apps/web/next.config.ts` nor `apps/admin/next.config.ts` sets `images.remotePatterns`. Not live-breaking today — `packages/database/prisma/seed.ts` never seeds `CarImage` rows, so no external photo URL exists yet to hit `next/image`'s allow-list check — but it **will** break the first time a real car photo from an external host (S3/Cloudinary/R2/etc.) is added, since `next/image` rejects any remote source not explicitly allow-listed. Both config files now carry a code comment flagging this. Action needed before launch: once an image host is chosen, add its hostname to `images.remotePatterns` in both apps.
