@@ -12,13 +12,22 @@ import {
   Users,
   Wrench,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useExecutiveSummaryQuery } from "@/features/dashboard/hooks";
 import { ApiError } from "@/lib/api-client";
 import { AiStatusCard } from "./ai-status-card";
-import { CarsByStatusChart } from "./cars-by-status-chart";
 import { KpiCard } from "./kpi-card";
-import { RevenueTrendChart } from "./revenue-trend-chart";
+
+const RevenueTrendChart = dynamic(
+  () => import("./revenue-trend-chart").then((mod) => mod.RevenueTrendChart),
+  { ssr: false, loading: () => <Skeleton className="h-64 w-full rounded-xl" /> },
+);
+
+const CarsByStatusChart = dynamic(
+  () => import("./cars-by-status-chart").then((mod) => mod.CarsByStatusChart),
+  { ssr: false, loading: () => <Skeleton className="h-64 w-full rounded-xl" /> },
+);
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
