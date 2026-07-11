@@ -23,6 +23,10 @@ export const metadata: Metadata = {
     template: "%s | DriveHub Admin",
   },
   description: "DriveHub enterprise admin dashboard.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({
