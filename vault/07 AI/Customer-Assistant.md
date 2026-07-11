@@ -18,14 +18,19 @@ apps/api/src/modules/ai/
     ai-provider.port.ts          — AiProviderPort, AiChatMessage/AiChatResult
     ai-request-log.repository.ts — audit logging port
     ai-context.repository.ts     — read-only grounding data port
+    recommendation-context.repository.ts — read-only port for the recommendation engine
+    recommendation-engine.ts (+ .spec.ts) — rankCars, the deterministic scoring behind recommendations
   application/
     customer-assistant.use-case.ts (+ .spec.ts)
+    list-ai-request-logs.use-case.ts (+ .spec.ts) — backs GET /ai/logs
+    recommend-vehicles.use-case.ts — backs GET /ai/recommendations
   infrastructure/
     openai-provider.ts
     anthropic-provider.ts
     ai-provider.factory.ts
     prisma-ai-request-log.repository.ts
     prisma-ai-context.repository.ts
+    prisma-recommendation-context.repository.ts
   ai.controller.ts
   ai.module.ts
 ```

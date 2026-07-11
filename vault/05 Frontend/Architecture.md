@@ -53,5 +53,10 @@ Both `/cars` and `/cars/[id]` are **Server Components that fetch on the server f
 - No auth/session UI yet (Better Auth integration comes with the Auth feature, not this one).
 - Cloudflare Images/R2 domain isn't configured in `next.config.ts` yet — no real image URLs exist to test against until the fleet has real photos.
 
+<<<<<<< HEAD
 ## Pre-launch checklist item (Sprint 9 Phase 4 performance audit)
 Neither `apps/web/next.config.ts` nor `apps/admin/next.config.ts` sets `images.remotePatterns`. Not live-breaking today — `packages/database/prisma/seed.ts` never seeds `CarImage` rows, so no external photo URL exists yet to hit `next/image`'s allow-list check — but it **will** break the first time a real car photo from an external host (S3/Cloudinary/R2/etc.) is added, since `next/image` rejects any remote source not explicitly allow-listed. Both config files now carry a code comment flagging this. Action needed before launch: once an image host is chosen, add its hostname to `images.remotePatterns` in both apps.
+=======
+## Homepage AI widgets (Sprint 7 Module 1)
+`features/ai/{api.ts, hooks.ts, components/}` follows the same feature-folder shape as `features/cars/` — `AiAssistant` (a chat widget over `POST /api/ai/chat`, `useChatMutation`) and `AiRecommendations` (`GET /api/ai/recommendations`, `useRecommendationsQuery`), both rendered on the homepage (`app/page.tsx`). Responses are Zod-parsed (`ChatResponseSchema`, `RecommendationResultSchema` from `@drivehub/contracts`) the same way `features/cars/api.ts` validates catalog responses. See `vault/07 AI/Customer-Assistant.md` for the backend these call.
+>>>>>>> orbit/ff34ecb4-sprint9-phase7-docs-fixes

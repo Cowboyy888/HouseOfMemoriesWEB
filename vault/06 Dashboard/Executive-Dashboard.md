@@ -46,6 +46,9 @@ The schema has no generic "Expense" entity (Finance module's future "Manage Expe
 4. Frontend: `tsc`, `eslint`, `next build` clean; pages verified live via HTTP (title tags, redirect behavior); RBAC error states (403) confirmed to render the real API error message, not a generic failure.
 5. **Not yet done:** a real browser click-through of the sign-in → dashboard flow (same limitation noted for the Sprint 4 Auth module — no headless browser available in this environment).
 
+## AI assistant status card (Sprint 7, added onto this dashboard)
+`AiStatusCard` (`features/dashboard/components/ai-status-card.tsx`), rendered from `ExecutiveDashboardView`, calls `GET /ai/status` (cheap "is a provider configured" check, no live model call) and `GET /ai/logs?limit=3` for a "Recent AI activity" list. See `vault/07 AI/Customer-Assistant.md`.
+
 ## Known issues / follow-ups
 - Revenue/Profit will read low until Booking/Payment-processing use cases exist and `RevenueLedgerEntry` starts getting written to (see above).
 - No role-management UI yet — role grants are done via direct SQL.
