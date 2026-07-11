@@ -54,9 +54,11 @@ export function CarFilters({ initialQuery }: { initialQuery: Partial<CarListQuer
   return (
     <form onSubmit={applyFilters} className="flex flex-col gap-4 rounded-xl border p-4">
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Listing type</label>
+        <label className="text-sm font-medium" htmlFor="listing-type">
+          Listing type
+        </label>
         <Select value={listingType} onValueChange={(value) => setListingType(value as typeof listingType)}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger id="listing-type" className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -70,8 +72,11 @@ export function CarFilters({ initialQuery }: { initialQuery: Partial<CarListQuer
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Min daily rate</label>
+        <label className="text-sm font-medium" htmlFor="min-daily-rate">
+          Min daily rate
+        </label>
         <Input
+          id="min-daily-rate"
           type="number"
           inputMode="numeric"
           min={0}
@@ -82,8 +87,11 @@ export function CarFilters({ initialQuery }: { initialQuery: Partial<CarListQuer
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Max daily rate</label>
+        <label className="text-sm font-medium" htmlFor="max-daily-rate">
+          Max daily rate
+        </label>
         <Input
+          id="max-daily-rate"
           type="number"
           inputMode="numeric"
           min={0}

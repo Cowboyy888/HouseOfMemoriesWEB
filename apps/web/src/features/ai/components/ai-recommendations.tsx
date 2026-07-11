@@ -11,7 +11,7 @@ export function AiRecommendations() {
     <section className="mt-8 w-full rounded-3xl border bg-background/80 p-6 shadow-sm">
       <div className="flex items-center gap-2">
         <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <CarFront className="size-4" />
+          <CarFront className="size-4" aria-hidden="true" />
         </div>
         <div>
           <h2 className="text-lg font-semibold">Recommended for you</h2>
@@ -21,7 +21,7 @@ export function AiRecommendations() {
 
       {isLoading ? (
         <div className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
           Loading recommendations…
         </div>
       ) : error ? (

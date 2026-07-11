@@ -50,7 +50,7 @@ export function AiAssistant() {
     <section className="mt-10 w-full rounded-3xl border bg-background/80 p-6 shadow-sm">
       <div className="flex items-center gap-2">
         <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Sparkles className="size-4" />
+          <Sparkles className="size-4" aria-hidden="true" />
         </div>
         <div>
           <h2 className="text-lg font-semibold">Ask DriveHub</h2>
@@ -58,7 +58,7 @@ export function AiAssistant() {
         </div>
       </div>
 
-      <div className="mt-5 space-y-3 rounded-2xl border bg-muted/30 p-3">
+      <div className="mt-5 space-y-3 rounded-2xl border bg-muted/30 p-3" aria-live="polite" aria-atomic="false">
         {messages.map((message, index) => (
           <div key={`${message.role}-${index}`} className={`rounded-xl px-3 py-2 text-sm ${message.role === "assistant" ? "bg-background" : "bg-primary/10 text-primary"}`}>
             <p className="font-medium">{message.role === "assistant" ? "DriveHub" : "You"}</p>
@@ -92,17 +92,23 @@ export function AiAssistant() {
           className="min-h-24 w-full rounded-2xl border bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring"
         />
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">{error ?? "Responses are grounded in the current catalog and policies."}</p>
+          {error ? (
+            <p role="alert" className="text-sm text-muted-foreground">
+              {error}
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">Responses are grounded in the current catalog and policies.</p>
+          )}
           <Button type="submit" disabled={chatMutation.isPending || !input.trim()}>
             {chatMutation.isPending ? (
               <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
+                <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
                 Thinking
               </>
             ) : (
               <>
                 Ask
-                <ArrowUpRight className="ml-2 size-4" />
+                <ArrowUpRight className="ml-2 size-4" aria-hidden="true" />
               </>
             )}
           </Button>
