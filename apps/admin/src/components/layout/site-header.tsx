@@ -60,8 +60,11 @@ export function SiteHeader() {
         {session && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground">
-                <User className="size-4" />
+              <button
+                aria-label="User menu"
+                className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              >
+                <User className="size-4" aria-hidden="true" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

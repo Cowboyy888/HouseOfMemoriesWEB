@@ -24,7 +24,7 @@ export function KpiCard({ label, value, icon, hint, tone = "neutral" }: KpiCardP
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-        <div className="text-muted-foreground">{icon}</div>
+        <div className="text-muted-foreground" aria-hidden="true">{icon}</div>
       </CardHeader>
       <CardContent>
         <div className={cn("font-heading text-2xl font-semibold tabular-nums", TONE_CLASSES[tone])}>

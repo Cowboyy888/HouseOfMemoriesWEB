@@ -48,8 +48,19 @@ export function SignUpForm() {
         <label className="text-sm font-medium" htmlFor="name">
           Full name
         </label>
-        <Input id="name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" />
-        {fieldErrors.name && <p className="text-sm text-destructive">{fieldErrors.name}</p>}
+        <Input
+          id="name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          autoComplete="name"
+          aria-invalid={!!fieldErrors.name}
+          aria-describedby={fieldErrors.name ? "name-error" : undefined}
+        />
+        {fieldErrors.name && (
+          <p id="name-error" role="alert" className="text-sm text-destructive">
+            {fieldErrors.name}
+          </p>
+        )}
       </div>
 
       <div className="space-y-1.5">
@@ -62,8 +73,14 @@ export function SignUpForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="email"
+          aria-invalid={!!fieldErrors.email}
+          aria-describedby={fieldErrors.email ? "email-error" : undefined}
         />
-        {fieldErrors.email && <p className="text-sm text-destructive">{fieldErrors.email}</p>}
+        {fieldErrors.email && (
+          <p id="email-error" role="alert" className="text-sm text-destructive">
+            {fieldErrors.email}
+          </p>
+        )}
       </div>
 
       <div className="space-y-1.5">
@@ -76,11 +93,21 @@ export function SignUpForm() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           autoComplete="new-password"
+          aria-invalid={!!fieldErrors.password}
+          aria-describedby={fieldErrors.password ? "password-error" : undefined}
         />
-        {fieldErrors.password && <p className="text-sm text-destructive">{fieldErrors.password}</p>}
+        {fieldErrors.password && (
+          <p id="password-error" role="alert" className="text-sm text-destructive">
+            {fieldErrors.password}
+          </p>
+        )}
       </div>
 
-      {formError && <p className="text-sm text-destructive">{formError}</p>}
+      {formError && (
+        <p role="alert" className="text-sm text-destructive">
+          {formError}
+        </p>
+      )}
 
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Creating account..." : "Create account"}

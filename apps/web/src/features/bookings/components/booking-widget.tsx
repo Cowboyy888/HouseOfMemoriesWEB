@@ -87,16 +87,24 @@ export function BookingWidget({ carId, locationId }: BookingWidgetProps) {
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             className="mt-1"
+            aria-invalid={datesInvalid}
+            aria-describedby={datesInvalid ? "return-date-error" : undefined}
           />
         </div>
       </div>
 
-      {datesInvalid && <p className="text-sm text-destructive">Return date must be after the pickup date.</p>}
+      {datesInvalid && (
+        <p id="return-date-error" role="alert" className="text-sm text-destructive">
+          Return date must be after the pickup date.
+        </p>
+      )}
 
       {query && availability.isLoading && <p className="text-sm text-muted-foreground">Checking availability…</p>}
 
       {query && availability.data && !availability.data.available && (
-        <p className="text-sm text-destructive">This car isn&apos;t available for the selected dates.</p>
+        <p role="alert" className="text-sm text-destructive">
+          This car isn&apos;t available for the selected dates.
+        </p>
       )}
 
       {query && availability.data?.available && (
@@ -112,7 +120,11 @@ export function BookingWidget({ carId, locationId }: BookingWidgetProps) {
         </div>
       )}
 
-      {formError && <p className="text-sm text-destructive">{formError}</p>}
+      {formError && (
+        <p role="alert" className="text-sm text-destructive">
+          {formError}
+        </p>
+      )}
 
       <Button
         className="w-full"

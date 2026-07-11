@@ -64,7 +64,11 @@ export function PaymentMethodSelector({ payableType, payableId, amount, currency
             </Button>
           ))}
         </div>
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
