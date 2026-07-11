@@ -52,3 +52,6 @@ Both `/cars` and `/cars/[id]` are **Server Components that fetch on the server f
 - ~~No Booking/Buy call-to-action on the detail page yet~~ — done in Sprint 6 Module 8, see `05 Frontend/Booking-Payments-UI.md` (rental booking; sale/purchase checkout is still a later phase).
 - No auth/session UI yet (Better Auth integration comes with the Auth feature, not this one).
 - Cloudflare Images/R2 domain isn't configured in `next.config.ts` yet — no real image URLs exist to test against until the fleet has real photos.
+
+## Homepage AI widgets (Sprint 7 Module 1)
+`features/ai/{api.ts, hooks.ts, components/}` follows the same feature-folder shape as `features/cars/` — `AiAssistant` (a chat widget over `POST /api/ai/chat`, `useChatMutation`) and `AiRecommendations` (`GET /api/ai/recommendations`, `useRecommendationsQuery`), both rendered on the homepage (`app/page.tsx`). Responses are Zod-parsed (`ChatResponseSchema`, `RecommendationResultSchema` from `@drivehub/contracts`) the same way `features/cars/api.ts` validates catalog responses. See `vault/07 AI/Customer-Assistant.md` for the backend these call.
