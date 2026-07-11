@@ -8,6 +8,9 @@ import { parseCarListSearchParams, type RawSearchParams } from "@/features/cars/
 export const metadata: Metadata = {
   title: "Browse Cars | DriveHub",
   description: "Search and filter our fleet of rental and for-sale vehicles by type, brand, and price.",
+  alternates: {
+    canonical: "/cars",
+  },
 };
 
 interface CarsPageProps {

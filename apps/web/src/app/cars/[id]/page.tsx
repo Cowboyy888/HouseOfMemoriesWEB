@@ -5,6 +5,7 @@ import { BookingWidget } from "@/features/bookings/components/booking-widget";
 import { fetchCarById } from "@/features/cars/api";
 import { CarGallery } from "@/features/cars/components/car-gallery";
 import { formatCurrency } from "@/lib/format";
+import { buildCarJsonLd } from "@/lib/structured-data";
 
 interface CarDetailPageProps {
   params: Promise<{ id: string }>;
@@ -23,13 +24,24 @@ export async function generateMetadata({ params }: CarDetailPageProps): Promise<
     car.listingType === "RENTAL" ? "Available to rent." : car.listingType === "SALE" ? "Available to buy." : "Available to rent or buy."
   }`;
 
+  const images = car.images[0] ? [car.images[0].url] : undefined;
+
   return {
     title,
     description,
+    alternates: {
+      canonical: `/cars/${car.id}`,
+    },
     openGraph: {
       title,
       description,
-      images: car.images[0] ? [car.images[0].url] : undefined,
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images,
     },
   };
 }
@@ -50,9 +62,14 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
 
   const dailyRate = formatCurrency(car.dailyRentalRate);
   const salePrice = formatCurrency(car.salePrice);
+  const carJsonLd = buildCarJsonLd(car);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(carJsonLd) }}
+      />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[3fr_2fr]">
         <div>
           <CarGallery images={car.images} alt={`${car.brand.name} ${car.model}`} />
